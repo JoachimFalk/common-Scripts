@@ -51,13 +51,13 @@ if (!$rc || !$opt->{'boilerplate'} || $opt->{'help'}) {
   &Usage(!$rc || !$opt->{'boilerplate'});
 }
 
-my $bptxt;
+my @BPTXT;
 
 {
   my $in  = IO::File->new($opt->{'boilerplate'}, "r") ||
     die "Can't open '$opt->{'boilerplate'}' for input: $!";
 
-  $bptxt = join('', ("/*\n", (map { " * $_"; } <$in>), " */\n"));
+  @BPTXT = <$in>;
 }
 
 foreach my $file (@ARGV) {
@@ -67,30 +67,92 @@ foreach my $file (@ARGV) {
     die "Can't open '$file' for input: $!";
   my $out = IO::File->new($file.".tmp", "w") ||
     die "Can't open '$file.tmp' for output: $!";
+  
+  my $state = 'SHEBANGLINE';
+  
+  my @commentStyle = ();
+  
+  if ($file =~ m/\.(?:c|cpp|cxx|cc|C|h|hpp|hxx|hh)$/) {
+    push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n\n"];
+    push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", "\n"     ];
+  } elsif ($file =~ m/\.(?:m4)$/) {
+    push @commentStyle, [ undef, qr{dnl\s},  undef, "", "dnl ", "\n"];
+  } elsif ($file =~ m/\.(?:sh|am|in|mk)$/) {
+    push @commentStyle, [ undef, qr{#},      undef, "", "# ",   "\n"];
+  } elsif ($file =~ m/\.(?:tex)$/) {
+    push @commentStyle, [ undef, qr{%},      undef, "", "% ",   "\n"];
+  } else {
+    die "Unknown file type for file '$file' !";
+  }
+  
+  my $reVimLine;
+  
+  foreach my $commentStyle (@commentStyle) {
+    my $re =
+      defined ($commentStyle->[0])
+      ? qr{^\s*$commentStyle->[0]\s*vim:.*$commentStyle->[2]}
+      : qr{^\s*$commentStyle->[1]\s*vim:};
+    if (defined $reVimLine) {
+      $reVimLine = qr{$reVimLine|$re};
+    } else {
+      $reVimLine = $re;
+    }
+  }
+  
+  my $reCopyrightStart;
+  
+  foreach my $commentStyle (@commentStyle) {
+    my $re =
+      defined ($commentStyle->[0])
+      ? qr{^\s*$commentStyle->[0]}
+      : qr{^\s*$commentStyle->[1]};
+    if (defined $reCopyrightStart) {
+      $reCopyrightStart = qr{$reCopyrightStart|$re};
+    } else {
+      $reCopyrightStart = $re;
+    }
+  }
 
-  my $state = 'VIMLINE';
+  my $copyrightEnd;
   
   while (my $line = <$in>) {
-    if ($state ne 'COPY' &&
-        $line =~ m{^\s*$}) {
-      # discard empty
+    if ($state eq 'SHEBANGLINE' && $line =~ m/^#!.*/) {
+      # Preserve shebang line
+      $out->write($line);
+      $state = 'VIMLINE';
       next;
     }
-    if ($state eq 'VIMLINE' &&
-        ($line =~ m{^\s*//\s*vim:} ||
-         $line =~ m{^\s*/\*\s*vim:.*\*/\s*$})) {
+    if (($state eq 'SHEBANGLINE' || $state eq 'VIMLINE') &&
+        $line =~ $reVimLine) {
       # Preserve vim line
       $out->write($line);
       $state = 'COPYRIGHTHEAD';
       next;
     }
-    if (($state eq 'VIMLINE' || $state eq 'COPYRIGHTHEAD') &&
-        $line =~ m{^\s*/\*}) {
+    if (($state eq 'VIMLINE' || $state eq 'SHEBANGLINE' || $state eq 'COPYRIGHTHEAD') &&
+        $line =~ $reCopyrightStart) {
       $state = 'COPYRIGHT';
+      foreach my $commentStyle (@commentStyle) {
+        if (defined($commentStyle->[0])
+              ? $line =~ m/^\s*$commentStyle->[0]/
+              : $line =~ m/^\s*$commentStyle->[1]/) {
+          $copyrightEnd = $commentStyle;
+          last;
+        }
+      }
+      unless (defined $copyrightEnd) {
+        die "Can't determin comment style for '$line' !";
+      }
     }
     if ($state eq 'COPYRIGHT' &&
-        $line =~ m{\*/}) {
+        (defined($copyrightEnd->[0])
+          ? $line =~ m/$copyrightEnd->[2]\s*$/
+          : !($line =~ m/^\s*$copyrightEnd->[1]/))) {
       $state = 'COPYRIGHTEND';
+      next if defined($copyrightEnd->[0]);
+    }
+    if ($state ne 'COPY' && $line =~ m{^\s*$}) {
+      # discard empty
       next;
     }
     if ($state ne 'COPY' && $state ne 'COPYRIGHT') {
@@ -98,8 +160,12 @@ foreach my $file (@ARGV) {
     }
     if ($state eq 'COPYRIGHTEND') {
       # insert boilerplate
+      my $bptxt = join('', (
+          $commentStyle[0]->[3],
+          (map { $commentStyle[0]->[4].$_; } @BPTXT),
+          $commentStyle[0]->[5])
+        );
       $out->write($bptxt);
-      $out->write("\n");
       $state = 'COPY';
     }
     if ($state eq 'COPY') {
