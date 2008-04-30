@@ -31,7 +31,7 @@ test_config() {
   BASE=$1;
   CONFIG=$2;
   if ! sed -e 's/[ 	]*#.*$//' -e '/^$/d' $BASE/$CONFIG | \
-    grep -v '^[a-zA-Z0-9./-]\+[ 	]\+[^@]\+@[^@]\+--\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+/\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+--\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+--\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+' > /dev/null; then
+    grep -v '^[a-zA-Z0-9./_-]\+[ 	]\+[^@]\+@[^@]\+--\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+/\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+--\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+--\([a-zA-Z0-9_]\|-[a-zA-Z0-9_]\)\+' > /dev/null; then
     return 0;
   else
     return 1;
