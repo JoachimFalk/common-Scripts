@@ -85,17 +85,18 @@ foreach my $file (@ARGV) {
     die "Unknown file type for file '$file' !";
   }
   
-  my $reVimLine;
+  my $reEditorLine;
+  my $editorLinePattern = "(vim:|-\*-)";
   
   foreach my $commentStyle (@commentStyle) {
     my $re =
       defined ($commentStyle->[0])
-      ? qr{^\s*$commentStyle->[0]\s*vim:.*$commentStyle->[2]}
-      : qr{^\s*$commentStyle->[1]\s*vim:};
-    if (defined $reVimLine) {
-      $reVimLine = qr{$reVimLine|$re};
+      ? qr{^\s*$commentStyle->[0]\s*$editorLinePattern.*$commentStyle->[2]}
+      : qr{^\s*$commentStyle->[1]\s*$editorLinePattern};
+    if (defined $reEditorLine) {
+      $reEditorLine = qr{$reEditorLine|$re};
     } else {
-      $reVimLine = $re;
+      $reEditorLine = $re;
     }
   }
   
@@ -119,17 +120,18 @@ foreach my $file (@ARGV) {
     if ($state eq 'SHEBANGLINE' && $line =~ m/^#!.*/) {
       # Preserve shebang line
       $out->write($line);
-      $state = 'VIMLINE';
+      $state = 'EDITORLINE';
       next;
     }
-    if (($state eq 'SHEBANGLINE' || $state eq 'VIMLINE') &&
-        $line =~ $reVimLine) {
-      # Preserve vim line
+    if (($state eq 'SHEBANGLINE' || $state eq 'EDITORLINE') &&
+        $line =~ $reEditorLine) {
+      # Preserve editor line
       $out->write($line);
-      $state = 'COPYRIGHTHEAD';
+      #$state = 'COPYRIGHTHEAD'; 
+      $state = 'EDITORLINE'; # we may have several EDITOR LINES
       next;
     }
-    if (($state eq 'VIMLINE' || $state eq 'SHEBANGLINE' || $state eq 'COPYRIGHTHEAD') &&
+    if (($state eq 'EDITORLINE' || $state eq 'SHEBANGLINE' || $state eq 'COPYRIGHTHEAD') &&
         $line =~ $reCopyrightStart) {
       $state = 'COPYRIGHT';
       foreach my $commentStyle (@commentStyle) {
