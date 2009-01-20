@@ -1,11 +1,13 @@
 #! /bin/sh
 
-BASE=`dirname $0`;
-BASE=`cd $BASE; pwd`;
+cd `dirname $0`
+BASE=.
 
-EXEC=$@
+EXEC="$@"
 
-test -d $BASE && ( cd $BASE; echo `basename $BASE`; $EXEC );
+if test x"$1" = x"tla"; then
+  EXEC="$EXEC | grep -v '^\*'"
+fi
 
 check_config() {
   BASE=$1;
@@ -14,7 +16,8 @@ check_config() {
     sed -e 's/[ 	]*#.*$//' -e '/^$/d' | \
     while read dir arch; do \
       test -d $BASE/$dir && ( \
-        cd $BASE/$dir; echo " $dir"; \
+        CANONLOC=`echo "$BASE/$dir" | sed -e 's@/\(\.\?/\)*@/@g' -e 's@/*$@@'` && \
+        cd $CANONLOC && echo "# $CANONLOC	`tla tree-id` from $BASE/$CONFIG"; \
         case `tla tree-id` in \
           ${arch}|${arch}--*) \
             ;; \
@@ -23,7 +26,7 @@ check_config() {
             echo " tla get $arch $dir !"; \
             ;; \
         esac; \
-        $EXEC ); \
+        eval $EXEC ); \
     done
 }
 
@@ -38,11 +41,12 @@ test_config() {
   fi
 }
 
+test -d $BASE && ( cd $BASE; echo "# .	`tla tree-id`"; eval $EXEC );
+
 find $BASE -name config-docu -o -name config | \
     grep -v "{arch}" | \
   while read file; do \
-    test -f $file && \
-    echo "$file:" && ( \
+    test -f $file && ( \
     dir=`dirname $file`; \
     config=`basename $file`; \
     if test_config $dir $config; then
