@@ -86,7 +86,7 @@ foreach my $file (@ARGV) {
   }
   
   my $reEditorLine;
-  my $editorLinePattern = "(vim:|-\*-)";
+  my $editorLinePattern = "(vim:|-\*-|!!!)";
   
   foreach my $commentStyle (@commentStyle) {
     my $re =
