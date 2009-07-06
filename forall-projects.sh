@@ -43,8 +43,8 @@ test_config() {
 
 test -d $BASE && ( cd $BASE; echo "# .	`tla tree-id`"; eval $EXEC );
 
-find $BASE -name config-docu -o -name config | \
-    grep -v "{arch}" | \
+find $BASE -type d \( -name "{arch}" -o -name ".git" \) -prune -o \
+  -type f \( -name "config-docu" -o -name "config" \) -print | \
   while read file; do \
     test -f $file && ( \
     dir=`dirname $file`; \
