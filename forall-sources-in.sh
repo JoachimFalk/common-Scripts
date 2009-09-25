@@ -13,4 +13,4 @@ SRCS=`find $@ \
                    -name "*.sh" \
                 \) -print`
 
-${COMMAND} ${SRCS}
+eval ${COMMAND} ${SRCS}
