@@ -72,7 +72,7 @@ foreach my $file (@ARGV) {
   
   my @commentStyle = ();
   
-  if ($file =~ m/\.(?:c|cpp|cxx|cc|C|h|hpp|tcpp|hxx|hh)$/) {
+  if ($file =~ m/\.(?:c|cpp|re2cpp|cxx|cc|C|h|hpp|tcpp|hxx|hh)$/) {
     push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n\n"];
     push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", "\n"     ];
   } elsif ($file =~ m/\.(?:m4)$/) {
