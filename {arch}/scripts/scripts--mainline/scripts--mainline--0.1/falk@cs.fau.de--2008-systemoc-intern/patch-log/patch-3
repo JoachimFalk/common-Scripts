@@ -1,0 +1,13 @@
+Revision: scripts--mainline--0.1--patch-3
+Archive: falk@cs.fau.de--2008-systemoc-intern
+Creator: Joachim Falk <falk@cs.fau.de>
+Date: Wed Sep 24 16:16:21 CEST 2008
+Standard-date: 2008-09-24 14:16:21 GMT
+Modified-files: forall-sources-in.sh
+New-patches: falk@cs.fau.de--2008-systemoc-intern/scripts--mainline--0.1--patch-3
+Summary: 
+ * foreach-sources-in.sh also ignore dustbin directory
+Keywords: 
+
+
+

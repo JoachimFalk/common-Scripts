@@ -1,0 +1,13 @@
+Revision: scripts--mainline--0.1--patch-11
+Archive: falk@cs.fau.de--2008-systemoc-intern
+Creator: Joachim Falk <falk@cs.fau.de>
+Date: Mon Jul  6 10:34:43 CEST 2009
+Standard-date: 2009-07-06 08:34:43 GMT
+Modified-files: forall-projects.sh
+New-patches: falk@cs.fau.de--2008-systemoc-intern/scripts--mainline--0.1--patch-11
+Summary: 
+ * Improved forall-projects.sh to ignore .git directories.
+Keywords: 
+
+
+

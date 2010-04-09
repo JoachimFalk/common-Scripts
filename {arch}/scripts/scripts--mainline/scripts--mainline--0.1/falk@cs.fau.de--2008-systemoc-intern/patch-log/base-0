@@ -1,0 +1,11 @@
+Revision: scripts--mainline--0.1--base-0
+Archive: falk@cs.fau.de--2008-systemoc-intern
+Creator: Christian Zebelein <christian.zebelein@cs.fau.de>
+Date: Fri Apr 25 09:34:01 CEST 2008
+Standard-date: 2008-04-25 07:34:01 GMT
+Summary: initial import
+New-files: forall-projects.sh forall-sources-in.sh
+New-patches: falk@cs.fau.de--2008-systemoc-intern/scripts--mainline--0.1--base-0
+
+
+(automatically generated log message)

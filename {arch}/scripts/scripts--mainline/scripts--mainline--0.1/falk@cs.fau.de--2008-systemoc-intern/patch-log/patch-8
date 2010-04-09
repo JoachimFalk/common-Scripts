@@ -1,0 +1,15 @@
+Revision: scripts--mainline--0.1--patch-8
+Archive: falk@cs.fau.de--2008-systemoc-intern
+Creator: Joachim Falk <falk@cs.fau.de>
+Date: Tue Jan 20 19:29:15 CET 2009
+Standard-date: 2009-01-20 18:29:15 GMT
+Renamed-files: .arch-ids/release.id .arch-ids/tla-functions.sh.id
+    release tla-functions.sh
+Modified-files: tla-functions.sh
+New-patches: falk@cs.fau.de--2008-systemoc-intern/scripts--mainline--0.1--patch-8
+Summary: 
+ * Added tla-functions.sh replacing release script which was IBM Cayman specific.
+Keywords: 
+
+
+
