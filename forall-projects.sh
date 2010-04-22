@@ -4,11 +4,21 @@ cd `dirname $0`
 BASE=.
 
 EXEC="$@"
+MODE=""
 
 if test x"$1" = x"tla"; then
   EXEC="$EXEC | grep -v '^\*'"
+  MODE="tla"
 elif test x"$1" = x"git"; then
   EXEC="$EXEC | grep -v '^# Not currently on any branch\.'"
+  MODE="git"
+fi
+if test x"$MODE" = x""; then
+  if a -d "$BASE/.git"; then
+    MODE="git"
+  else
+    MODE="tla"
+  fi
 fi
 
 # GNU arch (tla) stuff
@@ -72,7 +82,7 @@ git_recurse() {
     done
 }
 
-if test -d "$BASE/.git"; then
+if test x"$MODE" = x"git"; then
   # Do git stuff
   ( cd $BASE;
     if test x"`git status -s`" = x""; then
