@@ -98,6 +98,7 @@ if test x"$MODE" = x"git"; then
     SYM=`git describe --all`
     echo "### ${STATUS}${HASH} $BASE (${SYM})"
     eval $EXEC 
+    echo
   )
   git_recurse "$BASE"
 else
