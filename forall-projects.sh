@@ -97,8 +97,6 @@ if test x"$MODE" = x"git"; then
     # Get the symbolic name
     SYM=`git describe --all`
     echo "### ${STATUS}${HASH} $BASE (${SYM})"
-    eval $EXEC 
-    echo
   )
   git_recurse "$BASE"
 else
