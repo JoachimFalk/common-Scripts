@@ -1,0 +1,12 @@
+#! /bin/sh
+
+if grep '^ref:' .git/HEAD >/dev/null; then
+  echo "This project is already on a valid branch!"
+  exit
+fi
+if ! test -f .gitbranch; then
+  echo "This project is missing .gitbranch, so I can't guess a valid branch name!"
+  exit
+fi
+GITBRANCH=`cat .gitbranch`
+exec git checkout -b $GITBRANCH remotes/origin/$GITBRANCH

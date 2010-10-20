@@ -1,6 +1,11 @@
 #! /bin/sh
 
-#cd `dirname $0`
+SCRIPTS_DIR=`readlink -f "$0"`
+SCRIPTS_DIR=`dirname "$SCRIPTS_DIR"`
+
+PATH=$SCRIPTS_DIR:$PATH
+#echo $PATH
+
 BASE=.
 
 EXEC="$@"
