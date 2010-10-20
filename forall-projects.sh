@@ -19,7 +19,7 @@ elif test x"$1" = x"git"; then
   MODE="git"
 fi
 if test x"$MODE" = x""; then
-  if a -d "$BASE/.git"; then
+  if test -d "$BASE/.git"; then
     MODE="git"
   else
     MODE="tla"
