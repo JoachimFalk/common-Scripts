@@ -4,7 +4,7 @@ if grep '^ref:' .git/HEAD >/dev/null; then
   exec git pull
 fi
 if test -f .gitbranch; then
-  exec git checkout --track remotes/origin/`cat .gitbranch`
+  exec git checkout --track -b `cat .gitbranch` remotes/origin/`cat .gitbranch`
 fi
 
 echo "This project is missing .gitbranch, so I can't guess a valid branch name!"
