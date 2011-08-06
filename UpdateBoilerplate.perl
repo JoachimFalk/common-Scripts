@@ -33,11 +33,13 @@ sub Usage {
   my $error = (@_);
 
   print STDERR "\n".
-  "usage: $prog [-h|-?|--help] [-b|--boilerplate] <filename> files...\n\n";
+  "usage: $prog [-h|-?|--help] [-b|--boilerplate <filename>] <files to update> ...\n\n";
   exit($error ? 1 : 0);
 }
 
-my $opt = {};
+my $opt = {
+  boilerplate => 'COPYRIGHT'
+};
 
 my $p = new Getopt::Long::Parser;
 #$p->configure("pass_through", "gnu_getopt");
