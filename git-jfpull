@@ -1,14 +1,13 @@
 #! /bin/sh
 
-if grep '^ref:' .git/HEAD >/dev/null; then
+if grep '^ref: refs/heads/' .git/HEAD >/dev/null; then
+  if test -f .gitbranch; then
+    git branch --set-upstream `sed -e 's/^ref: refs\/heads\///' .git/HEAD` origin/`cat .gitbranch`
+  fi
   exec git pull
 fi
 if test -f .gitbranch; then
-  if grep master .gitbranch  >/dev/null; then
-    git checkout master && git pull && exit 0
-  else
-    exec git checkout --track -b `cat .gitbranch` remotes/origin/`cat .gitbranch`
-  fi
+  exec git checkout --track -b `cat .gitbranch` remotes/origin/`cat .gitbranch`
 fi
 
 echo "This project is missing .gitbranch, so I can't guess a valid branch name!"
