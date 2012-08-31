@@ -7,7 +7,7 @@ SRCS=`find $@ \
         -type f \( -name "aclocal.m4" \) -prune -o \
         -type f \( -name "*.cpp" -o -name "*.tcpp" -o -name "*.hpp" -o -name "*.thpp" -o \
                    -name "*.cxx" -o -name "*.tcxx" -o -name "*.hxx" -o -name "*.thxx" -o -name "*.C" -o \
-                   -name "*.c" -o -name "*.h" -o \
+                   -name "*.c" -o -name "*.h" -o -name "*.re2cpp" -o \
                    -name "*.perl" -o -name "*.pm" -o \
                    -name "*.py" -o \
                    -name "*.m4" -o \
