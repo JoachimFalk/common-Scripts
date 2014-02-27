@@ -1,0 +1,37 @@
+#! /bin/sh
+
+GITBRANCH=""
+test -f .gitbranch && GITBRANCH=`cat .gitbranch`
+ORIGINGITBRANCH="origin/$GITBRANCH"
+
+if test -d .git; then
+  GITDIR=".git"
+elif test -f .git; then
+  GITDIR=`sed -ne '/^gitdir:/{s/^[^:]*:\s*//;p}' .git`
+else
+  echo "This is not a git repository!"
+  exit -1
+fi
+
+if grep '^ref: refs/heads/' ${GITDIR}/HEAD >/dev/null; then
+  if test -n "$GITBRANCH"; then
+    git branch --set-upstream `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD` "$ORIGINGITBRANCH"
+  fi
+else
+  if test -n "$GITBRANCH"; then
+    GITBRANCHTMP=""
+    if test -f "${GITDIR}/refs/heads/$GITBRANCH"; then
+      GITBRANCHTMP=`mktemp -u --tmpdir=${GITDIR}/refs/heads "${GITBRANCH}.XXX"`
+      GITBRANCHTMP=`basename "$GITBRANCHTMP"`
+      git checkout -b "$GITBRANCHTMP"
+      git checkout "$GITBRANCH"
+      git merge "$GITBRANCHTMP" && git branch -d "$GITBRANCHTMP"
+    else
+      git checkout -b "$GITBRANCH"
+      git branch --set-upstream `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD` "$ORIGINGITBRANCH"
+    fi
+  else
+    echo "This project is missing .gitbranch, so I can't guess a valid branch name to set up tracking!"
+    exit -1
+  fi
+fi
