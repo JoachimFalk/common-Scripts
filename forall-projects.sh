@@ -82,8 +82,10 @@ git_recurse() {
       HASH="${subline%% *}"; subline="${subline#* }"
       DIR="${subline%% *}";  subline="${subline#* (}"
       SYM="${subline%)*}"
-      echo "### ${STATUS}${HASH} $BASE/$DIR (${SYM})"
-      git_recurse "$BASE/$DIR"
+      if test -f "$BASE/$DIR/.git" -o -d "$BASE/$DIR/.git"; then
+        echo "### ${STATUS}${HASH} $BASE/$DIR (${SYM})"
+        git_recurse "$BASE/$DIR"
+      fi
     done
 }
 
