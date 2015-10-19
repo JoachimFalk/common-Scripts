@@ -15,7 +15,7 @@ fi
 
 if grep '^ref: refs/heads/' ${GITDIR}/HEAD >/dev/null; then
   if test -n "$GITBRANCH"; then
-    git branch --set-upstream `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD` "$ORIGINGITBRANCH"
+    git branch --set-upstream-to="$ORIGINGITBRANCH" `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD`
   fi
   exec git pull
 fi
@@ -29,7 +29,7 @@ if test -n "$GITBRANCH"; then
     git merge "$GITBRANCHTMP" && git branch -d "$GITBRANCHTMP"
   else
     git checkout -b "$GITBRANCH"
-    git branch --set-upstream `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD` "$ORIGINGITBRANCH"
+    git branch --set-upstream-to="$ORIGINGITBRANCH" `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD`
   fi
   exec git pull
 # exec git checkout --track -b "$GITBRANCH" "remotes/origin/$GITBRANCH"
