@@ -1,7 +1,12 @@
 #! /bin/sh
 
-SCRIPTS_DIR=`readlink -f "$0"`
-SCRIPTS_DIR=`dirname "$SCRIPTS_DIR"`
+if test -L "$0"; then
+  SCRIPTS_DIR=`readlink -f "$0"`
+  SCRIPTS_DIR=`dirname "$SCRIPTS_DIR"`
+else
+  SCRIPTS_DIR=`dirname "$0"`
+  SCRIPTS_DIR=`cd "$SCRIPTS_DIR" && pwd -P`
+fi
 
 PATH=$SCRIPTS_DIR:$PATH
 #echo $PATH
