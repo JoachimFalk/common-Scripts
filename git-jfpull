@@ -22,8 +22,12 @@ fi
 if test -n "$GITBRANCH"; then
   GITBRANCHTMP=""
   if test -f "${GITDIR}/refs/heads/$GITBRANCH"; then
-    GITBRANCHTMP=`mktemp -u --tmpdir=${GITDIR}/refs/heads "${GITBRANCH}.XXX"`
-    GITBRANCHTMP=`basename "$GITBRANCHTMP"`
+    if test -x /bin/mktemp; then
+      GITBRANCHTMP=`/bin/mktemp -u --tmpdir=${GITDIR}/refs/heads "${GITBRANCH}.XXX"`
+      GITBRANCHTMP=`basename "$GITBRANCHTMP"`
+    else
+      GITBRANCHTMP="${GITBRANCH}.XXX"
+    fi
     git checkout -b "$GITBRANCHTMP"
     git checkout "$GITBRANCH"
     git merge "$GITBRANCHTMP" && git branch -d "$GITBRANCHTMP"
