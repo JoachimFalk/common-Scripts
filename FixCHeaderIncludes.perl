@@ -64,10 +64,10 @@ $opt->{headerDir} =~ s{/*$}{};
 my (@SOURCES, @HEADERS);
 
 finddepth(sub {
-    push @SOURCES, $1 if $File::Find::name =~ m{^\Q$opt->{srcDir}\E/(.*\.(?:cpp|hpp))$};
+    push @SOURCES, $1 if $File::Find::name =~ m{^\Q$opt->{srcDir}\E/(.*\.(?:c|cpp|re2cpp|cxx|cc|C|h|hpp|tcpp|hxx|hh)(?:\.in)?)$};
   }, $opt->{srcDir});
 finddepth(sub {
-    push @HEADERS, $1 if $File::Find::name =~ m{^\Q$opt->{headerDir}\E/(.*\.(?:hpp|hpp\.in))$};
+    push @HEADERS, $1 if $File::Find::name =~ m{^\Q$opt->{headerDir}\E/(.*\.(?:h|hpp|tcpp|hxx|hh)(?:\.in)?)$};
   }, $opt->{headerDir});
 
 my (%DUPLICATE_HEADER, %INTERNAL_HEADER, %EXTERNAL_HEADER);
@@ -85,7 +85,8 @@ foreach my $file (@HEADERS) {
 }
 
 foreach my $file (@SOURCES) {
-  next if $file =~ m/\.(?:cpp|c)$/;
+  next unless $file =~ m/\.(?:h|hpp|tcpp|hxx|hh)(?:\.in)?$/;
+  $file =~ s{\.in$}{};
   my $base = basename $file;
   unless (defined $EXTERNAL_HEADER{$base} ||
           defined $INTERNAL_HEADER{$base} ||
