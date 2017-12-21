@@ -15,23 +15,24 @@ fi
 
 if grep '^ref: refs/heads/' ${GITDIR}/HEAD >/dev/null; then
   if test -n "$GITBRANCH"; then
-    git branch --set-upstream `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD` "$ORIGINGITBRANCH"
+    git branch --set-upstream-to="$ORIGINGITBRANCH" `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD`
   fi
-else
-  if test -n "$GITBRANCH"; then
-    GITBRANCHTMP=""
-    if test -f "${GITDIR}/refs/heads/$GITBRANCH"; then
-      GITBRANCHTMP=`mktemp -u --tmpdir=${GITDIR}/refs/heads "${GITBRANCH}.XXX"`
-      GITBRANCHTMP=`basename "$GITBRANCHTMP"`
-      git checkout -b "$GITBRANCHTMP"
-      git checkout "$GITBRANCH"
-      git merge "$GITBRANCHTMP" && git branch -d "$GITBRANCHTMP"
-    else
-      git checkout -b "$GITBRANCH"
-      git branch --set-upstream `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD` "$ORIGINGITBRANCH"
-    fi
-  else
-    echo "This project is missing .gitbranch, so I can't guess a valid branch name to set up tracking!"
-    exit -1
-  fi
+  exit 0;
 fi
+if test -n "$GITBRANCH"; then
+  GITBRANCHTMP=""
+  if test -f "${GITDIR}/refs/heads/$GITBRANCH"; then
+    GITBRANCHTMP=`mktemp -u --tmpdir=${GITDIR}/refs/heads "${GITBRANCH}.XXX"`
+    GITBRANCHTMP=`basename "$GITBRANCHTMP"`
+    git checkout -b "$GITBRANCHTMP"
+    git checkout "$GITBRANCH"
+    git merge "$GITBRANCHTMP" && git branch -d "$GITBRANCHTMP"
+  else
+    git checkout -b "$GITBRANCH"
+    git branch --set-upstream-to="$ORIGINGITBRANCH" `sed -e 's/^ref: refs\/heads\///' ${GITDIR}/HEAD`
+  fi
+  exit 0;
+fi
+
+echo "This project is missing .gitbranch, so I can't guess a valid branch name!"
+exit -1
