@@ -30,15 +30,31 @@ $prog = basename($0);
 #
 
 sub Usage {
-  my $error = (@_);
+  my ($error) = @_;
 
-  print STDERR "\n".
-  "usage: $prog [-h|-?|--help] [-b|--boilerplate <filename>] <files to update> ...\n\n";
-  exit($error ? 1 : 0);
+  my $msg = "\n".
+    "Usage: $prog [options]  <files to update> ...\n".
+    "\n".
+    "Available options:\n".
+    "  --help|-h|-?                          Produce this help message\n".
+    "  --copyright|-c [<filename>]           Insert the given copyright into the\n".
+    "                                        files to update. Default: COPYRIGHT\n".
+    "  --editorline|-e [<filename>]          Insert the given editor lines into the\n".
+    "                                        files to update. Default: EDITORLINE\n".
+    "\n";
+  if ($error) {
+    print STDERR $msg;
+    exit 1;
+  } else {
+    print STDOUT $msg;
+    exit 0;
+  }
 }
 
 my $opt = {
-  boilerplate => 'COPYRIGHT'
+  help       => undef,
+  copyright  => undef,
+  editorline => undef,
 };
 
 my $p = new Getopt::Long::Parser;
@@ -46,21 +62,36 @@ my $p = new Getopt::Long::Parser;
 $p->configure("gnu_getopt");
 my $rc = $p->getoptions(
   'help|h|?'          => \$opt->{'help'},
-  'boilerplate|b=s'   => \$opt->{'boilerplate'},
+  'copyright|c:s'     => \$opt->{'copyright'},
+  'editorline|e:s'    => \$opt->{'editorline'},
 );
 
-if (!$rc || !$opt->{'boilerplate'} || $opt->{'help'}) {
-  &Usage(!$rc || !$opt->{'boilerplate'});
+if (defined $opt->{copyright} && !$opt->{copyright}) {
+  $opt->{copyright} = 'COPYRIGHT';
+}
+if (defined $opt->{'editorline'} && !$opt->{'editorline'}) {
+  $opt->{'editorline'} = 'EDITORLINES';
+}
+
+if (!$rc || (!$opt->{'copyright'} && !$opt->{'editorline'}) || $opt->{'help'}) {
+# print STDOUT (!$rc || !$opt->{'help'} ? 'error' : 'help'), "\n";
+  &Usage(!$rc || !$opt->{'help'});
 }
 
 my @BPTXT;
-
-{
-  my $in  = IO::File->new($opt->{'boilerplate'}, "r") ||
-    die "Can't open '$opt->{'boilerplate'}' for input: $!";
-
+if ($opt->{'copyright'}) {
+  my $in  = IO::File->new($opt->{'copyright'}, "r") ||
+    die "Can't open '$opt->{'copyright'}' for input: $!";
   @BPTXT = <$in>;
 }
+
+my @ELTXT;
+if ($opt->{'editorline'}) {
+  my $in  = IO::File->new($opt->{'editorline'}, "r") ||
+    die "Can't open '$opt->{'editorline'}' for input: $!";
+  @ELTXT = <$in>;
+}
+
 
 foreach my $file (@ARGV) {
   print $file, "\n";
@@ -75,14 +106,14 @@ foreach my $file (@ARGV) {
   my @commentStyle = ();
   
   if ($file =~ m/\.(?:c|cpp|re2cpp|cxx|cc|C|h|hpp|tcpp|hxx|hh)$/) {
-    push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n\n"];
-    push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", "\n"     ];
+    push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n"];
+    push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", ""     ];
   } elsif ($file =~ m/\.(?:m4)$/) {
-    push @commentStyle, [ undef, qr{dnl\s},  undef, "", "dnl ", "\n"];
+    push @commentStyle, [ undef, qr{dnl\s},  undef, "", "dnl ", ""];
   } elsif ($file =~ m/\.(?:sh|am|in|mk|in\.frag)$/) {
-    push @commentStyle, [ undef, qr{#},      undef, "", "# ",   "\n"];
+    push @commentStyle, [ undef, qr{#},      undef, "", "# ",   ""];
   } elsif ($file =~ m/\.(?:tex)$/) {
-    push @commentStyle, [ undef, qr{%},      undef, "", "% ",   "\n"];
+    push @commentStyle, [ undef, qr{%},      undef, "", "% ",   ""];
   } else {
     die "Unknown file type for file '$file' !";
   }
@@ -119,21 +150,49 @@ foreach my $file (@ARGV) {
   my $copyrightEnd;
   
   while (my $line = <$in>) {
-    if ($state eq 'SHEBANGLINE' && $line =~ m/^#!.*/) {
-      # Preserve shebang line
-      $out->write($line);
-      $state = 'EDITORLINE';
-      next;
+    if ($state eq 'SHEBANGLINE') {
+      if ($line =~ m/^#!.*/) {
+        # Preserve shebang line
+        $out->write($line);
+        $state = 'EDITORLINE';
+        next;
+      } else {
+        $state = 'EDITORLINE';
+      }
     }
-    if (($state eq 'SHEBANGLINE' || $state eq 'EDITORLINE') &&
-        $line =~ $reEditorLine) {
-      # Preserve editor line
-      $out->write($line);
-      #$state = 'COPYRIGHTHEAD'; 
-      $state = 'EDITORLINE'; # we may have several EDITOR LINES
-      next;
+    if ($state eq 'EDITORLINE') {
+      if ($line =~ $reEditorLine) {
+        if (!$opt->{editorline}) {
+          # Preserve editor line
+          $out->write($line);
+        }
+        $state = 'EDITORLINE'; # we may have several EDITOR LINES
+        next;
+      } else {
+        if ($opt->{editorline}) {
+          my $commentStyle = $commentStyle[0];
+          foreach my $cs (@commentStyle) {
+            if ($cs->[3] eq '') {
+              $commentStyle = $cs;
+              last;
+            }
+          }
+          # insert editor lines
+          my $eltxt = join('', (
+              $commentStyle->[3],
+              (map { $commentStyle->[4].$_; } @ELTXT),
+              $commentStyle->[5])
+            );
+          $out->write($eltxt);
+        }
+        if ($opt->{copyright}) {
+          $state = 'COPYRIGHTSTART';
+        } else {
+          $state = 'COPY';
+        }
+      }
     }
-    if (($state eq 'EDITORLINE' || $state eq 'SHEBANGLINE' || $state eq 'COPYRIGHTHEAD') &&
+    if ($state eq 'COPYRIGHTSTART' &&
         $line =~ $reCopyrightStart) {
       $state = 'COPYRIGHT';
       foreach my $commentStyle (@commentStyle) {
@@ -163,12 +222,12 @@ foreach my $file (@ARGV) {
       $state = 'COPYRIGHTEND';
     }
     if ($state eq 'COPYRIGHTEND') {
-      # insert boilerplate
+      # insert copyright
       my $bptxt = join('', (
           $commentStyle[0]->[3],
           (map { $commentStyle[0]->[4].$_; } @BPTXT),
           $commentStyle[0]->[5])
-        );
+        )."\n";
       $out->write($bptxt);
       $state = 'COPY';
     }
