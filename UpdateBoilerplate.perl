@@ -15,6 +15,7 @@ BEGIN {
 
 use Getopt::Long;
 use IO::File;
+use Date::Parse;
 
 use vars qw($prog);
 
@@ -92,13 +93,71 @@ if ($opt->{'editorline'}) {
   @ELTXT = <$in>;
 }
 
+our %EMAILS = (
+    'falk@cs.fau.de'            => 'Joachim Falk <joachim.falk@fau.de>',
+    'joachim.falk@gmx.de'       => 'Joachim Falk <joachim.falk@fau.de>',
+    'streubuehr@cs.fau.de'      => 'Martin Streubuehr <martin.streubuehr@fau.de>',
+    'sebastian.graf@cs.fau.de'  => 'Sebastian Graf <sebastian.graf@fau.de>',
+    'schwarzer@codesign.informatik.uni-erlangen.de' => 'Tobias Schwarzer <tobias.schwarzer@fau.de>',
+    'christian.zebelein@informatik.uni-erlangen.de' => 'Christian Zebelein <christian.zebelein@fau.de>',
+    'rafael.rosales@informatik.uni-erlangen.de'     => 'Rafael Rosales <rafael.rosales@fau.de>',
+  );
+
 
 foreach my $file (@ARGV) {
   print $file, "\n";
-  
-  my $in  = IO::File->new($file, "r") ||
+
+  my @BPTXT_INSERTED;
+
+  {
+    my %COPYRIGHTYEARS;
+
+    my $log = eval {
+        open(my $fh, "-|", "git", "log", "--follow", $file); $fh
+      } or
+      die "Can't get git log for '$file': $!";
+    my $author;
+
+    foreach my $line (<$log>) {
+      if ($line =~ m/^Author:\s*([^<>]*\s*(?:<(.*)>)?)$/) {
+        my $email = $2;
+        if (defined $EMAILS{$email}) {
+          $author = $EMAILS{$email};
+        } else {
+          $author = $1;
+        }
+        if ($author =~ m/\@(?:cs\.)?fau\.de>/) {
+          $author = "FAU -- $author"
+        }
+      } elsif ($line =~ m/^Date:\s*(.*)$/) {
+        my ($ss,$mm,$hh,$day,$month,$year,$zone) = strptime($1);
+        $COPYRIGHTYEARS{1900+$year}{$author} = 1;
+      }
+    }
+
+    my @COPYRIGHTLINES;
+    foreach my $year (sort keys %COPYRIGHTYEARS) {
+      foreach my $author (sort keys %{$COPYRIGHTYEARS{$year}}) {
+        push @COPYRIGHTLINES, "$year $author";
+      }
+    }
+    foreach my $line (@BPTXT) {
+      if ($line =~ m/\@COPYRIGHTLINES\@/) {
+        push @BPTXT_INSERTED, map {
+            my $rline = $line."";
+            $rline =~ s/\@COPYRIGHTLINES\@/$_/;
+            $rline;
+          } @COPYRIGHTLINES;
+      } else {
+        push @BPTXT_INSERTED, $line;
+      }
+    }
+
+  }
+
+  my $in  = IO::File->new($file, "r") or
     die "Can't open '$file' for input: $!";
-  my $out = IO::File->new($file.".tmp", "w") ||
+  my $out = IO::File->new($file.".tmp", "w") or
     die "Can't open '$file.tmp' for output: $!";
   
   my $state = 'SHEBANGLINE';
@@ -110,7 +169,7 @@ foreach my $file (@ARGV) {
     push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", ""     ];
   } elsif ($file =~ m/\.(?:m4)$/) {
     push @commentStyle, [ undef, qr{dnl\s},  undef, "", "dnl ", ""];
-  } elsif ($file =~ m/\.(?:sh|am|in|mk|in\.frag)$/) {
+  } elsif ($file =~ m/\.(?:sh|am|ac|in|mk|in\.frag)$/) {
     push @commentStyle, [ undef, qr{#},      undef, "", "# ",   ""];
   } elsif ($file =~ m/\.(?:tex)$/) {
     push @commentStyle, [ undef, qr{%},      undef, "", "% ",   ""];
@@ -225,7 +284,7 @@ foreach my $file (@ARGV) {
       # insert copyright
       my $bptxt = join('', (
           $commentStyle[0]->[3],
-          (map { $commentStyle[0]->[4].$_; } @BPTXT),
+          (map { $commentStyle[0]->[4].$_; } @BPTXT_INSERTED),
           $commentStyle[0]->[5])
         )."\n";
       $out->write($bptxt);
