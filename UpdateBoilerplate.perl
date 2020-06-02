@@ -167,6 +167,9 @@ foreach my $file (@ARGV) {
   if ($file =~ m/\.(?:c|cpp|re2cpp|cxx|cc|C|h|hpp|tcpp|hxx|hh)$/) {
     push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n"];
     push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", ""     ];
+  } elsif ($file =~ m/\.(?:java)$/) {
+    push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n"];
+    push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", ""     ];
   } elsif ($file =~ m/\.(?:m4)$/) {
     push @commentStyle, [ undef, qr{dnl\s},  undef, "", "dnl ", ""];
   } elsif ($file =~ m/\.(?:sh|am|ac|in|mk|in\.frag)$/) {
