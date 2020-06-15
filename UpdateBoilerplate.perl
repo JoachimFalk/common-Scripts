@@ -95,7 +95,8 @@ if ($opt->{'editorline'}) {
 
 our %EMAILS = (
     'falk@cs.fau.de'            => 'Joachim Falk <joachim.falk@fau.de>',
-    'joachim.falk@gmx.de'       => 'Joachim Falk <joachim.falk@fau.de>',
+    'joachim.falk@gmx.de'       => 'Joachim Falk <joachim.falk@gmx.de>',
+    'liyuan.zhang@informatik.uni-erlangen.de' => 'Liyuan Zhang <liyuan.zhang@fau.de>',
     'streubuehr@cs.fau.de'      => 'Martin Streubuehr <martin.streubuehr@fau.de>',
     'sebastian.graf@cs.fau.de'  => 'Sebastian Graf <sebastian.graf@fau.de>',
     'schwarzer@codesign.informatik.uni-erlangen.de' => 'Tobias Schwarzer <tobias.schwarzer@fau.de>',
