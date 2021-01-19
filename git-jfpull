@@ -9,8 +9,8 @@ if test -d .git; then
 elif test -f .git; then
   GITDIR=`sed -ne '/^gitdir:/{s/^[^:]*:\s*//;p}' .git`
 else
-  echo "This is not a git repository!"
-  exit -1
+  echo "The directory `pwd` is not a git repository!"
+  exit 255
 fi
 
 if grep '^ref: refs/heads/' ${GITDIR}/HEAD >/dev/null; then
