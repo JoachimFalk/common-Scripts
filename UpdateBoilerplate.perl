@@ -1,12 +1,13 @@
 #! /usr/bin/env perl
 # -*- tab-width:8; indent-tabs-mode:nil; c-basic-offset:2; -*-
 # vim: set sw=2 ts=8 et:
-#
+# 
 # Copyright (c)
 #   2011 FAU -- Joachim Falk <joachim.falk@fau.de>
 #   2012 Joachim Falk <joachim.falk@gmx.de>
 #   2018 FAU -- Joachim Falk <joachim.falk@fau.de>
 #   2020 FAU -- Joachim Falk <joachim.falk@fau.de>
+#   2023 FAU -- Joachim Falk <joachim.falk@fau.de>
 # 
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -117,7 +118,7 @@ if ($opt->{'editorline'}) {
 
 our %EMAILS = (
     'falk@cs.fau.de'            => 'Joachim Falk <joachim.falk@fau.de>',
-    'joachim.falk@gmx.de'       => 'Joachim Falk <joachim.falk@gmx.de>',
+    'joachim.falk@gmx.de'       => 'Joachim Falk <joachim.falk@fau.de>',
     'liyuan.zhang@informatik.uni-erlangen.de' => 'Liyuan Zhang <liyuan.zhang@fau.de>',
     'streubuehr@cs.fau.de'      => 'Martin Streubuehr <martin.streubuehr@fau.de>',
     'sebastian.graf@cs.fau.de'  => 'Sebastian Graf <sebastian.graf@fau.de>',
@@ -130,53 +131,7 @@ our %EMAILS = (
 foreach my $file (@ARGV) {
   print $file, "\n";
 
-  my @BPTXT_INSERTED;
-
-  {
-    my %COPYRIGHTYEARS;
-
-    my $log = eval {
-        open(my $fh, "-|", "git", "log", "--follow", $file); $fh
-      } or
-      die "Can't get git log for '$file': $!";
-    my $author;
-
-    foreach my $line (<$log>) {
-      if ($line =~ m/^Author:\s*([^<>]*\s*(?:<(.*)>)?)$/) {
-        my $email = $2;
-        if (defined $EMAILS{$email}) {
-          $author = $EMAILS{$email};
-        } else {
-          $author = $1;
-        }
-        if ($author =~ m/\@(?:cs\.)?fau\.de>/) {
-          $author = "FAU -- $author"
-        }
-      } elsif ($line =~ m/^Date:\s*(.*)$/) {
-        my ($ss,$mm,$hh,$day,$month,$year,$zone) = strptime($1);
-        $COPYRIGHTYEARS{1900+$year}{$author} = 1;
-      }
-    }
-
-    my @COPYRIGHTLINES;
-    foreach my $year (sort keys %COPYRIGHTYEARS) {
-      foreach my $author (sort keys %{$COPYRIGHTYEARS{$year}}) {
-        push @COPYRIGHTLINES, "$year $author";
-      }
-    }
-    foreach my $line (@BPTXT) {
-      if ($line =~ m/\@COPYRIGHTLINES\@/) {
-        push @BPTXT_INSERTED, map {
-            my $rline = $line."";
-            $rline =~ s/\@COPYRIGHTLINES\@/$_/;
-            $rline;
-          } @COPYRIGHTLINES;
-      } else {
-        push @BPTXT_INSERTED, $line;
-      }
-    }
-
-  }
+  my %COPYRIGHTYEARS;
 
   my $in  = IO::File->new($file, "r") or
     die "Can't open '$file' for input: $!";
@@ -268,6 +223,7 @@ foreach my $file (@ARGV) {
               (map { $commentStyle->[4].$_; } @ELTXT),
               $commentStyle->[5])
             );
+          $eltxt .= $commentStyle->[4]."\n" if $commentStyle->[5] eq '';
           $out->write($eltxt);
         }
         if ($opt->{copyright}) {
@@ -292,6 +248,21 @@ foreach my $file (@ARGV) {
         die "Can't determin comment style for '$line' !";
       }
     }
+    if ($state eq 'COPYRIGHT') {
+      my $text;
+      if (defined($copyrightEnd->[1]) &&
+          $line =~ m/^\s*$copyrightEnd->[1]\s*(.*)$/) {
+        $text = $1;
+      } else {
+        $text = $line;
+      }
+      chomp $text;
+      if ($text =~ m/(20[0-9]{2})\s+([^<>]*<[a-z0-9.]+\@[a-z0-9.-]+>)\s*$/) {
+        my $year   = $1;
+        my $author = $2;
+        $COPYRIGHTYEARS{$year}{$author} = 1;
+      }
+    }
     if ($state eq 'COPYRIGHT' &&
         (defined($copyrightEnd->[0])
           ? $line =~ m/$copyrightEnd->[2]\s*$/
@@ -307,6 +278,49 @@ foreach my $file (@ARGV) {
       $state = 'COPYRIGHTEND';
     }
     if ($state eq 'COPYRIGHTEND') {
+      my $maxYear = (sort keys %COPYRIGHTYEARS)[-1] // 0;
+      {
+        my $log = eval {
+            open(my $fh, "-|", "git", "log", "--follow", $file); $fh
+          } or
+          die "Can't get git log for '$file': $!";
+        my $author;
+
+        foreach my $line (<$log>) {
+          if ($line =~ m/^Author:\s*([^<>]*\s*(?:<(.*)>)?)$/) {
+            my $email = $2;
+            if (defined $EMAILS{$email}) {
+              $author = $EMAILS{$email};
+            } else {
+              $author = $1;
+            }
+            if ($author =~ m/\@(?:cs\.)?fau\.de>/) {
+              $author = "FAU -- $author"
+            }
+          } elsif ($line =~ m/^Date:\s*(.*)$/) {
+            my ($ss,$mm,$hh,$day,$month,$year,$zone) = strptime($1);
+            $COPYRIGHTYEARS{1900+$year}{$author} = 1 if 1900+$year >= $maxYear;
+          }
+        }
+      }
+      my @COPYRIGHTLINES;
+      foreach my $year (sort keys %COPYRIGHTYEARS) {
+        foreach my $author (sort keys %{$COPYRIGHTYEARS{$year}}) {
+          push @COPYRIGHTLINES, "$year $author";
+        }
+      }
+      my @BPTXT_INSERTED;
+      foreach my $line (@BPTXT) {
+        if ($line =~ m/\@COPYRIGHTLINES\@/) {
+          push @BPTXT_INSERTED, map {
+              my $rline = $line."";
+              $rline =~ s/\@COPYRIGHTLINES\@/$_/;
+              $rline;
+            } @COPYRIGHTLINES;
+        } else {
+          push @BPTXT_INSERTED, $line;
+        }
+      }
       # insert copyright
       my $bptxt = join('', (
           $commentStyle[0]->[3],
