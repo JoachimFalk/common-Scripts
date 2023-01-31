@@ -173,7 +173,7 @@ foreach my $file (@ARGV) {
     push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", ""     ];
   } elsif ($file =~ m/\.(?:m4)$/) {
     push @commentStyle, [ undef, qr{dnl\s},  undef, "", "dnl ", ""];
-  } elsif ($file =~ m/\.(?:sh|am|ac|in|mk|in\.frag)$/) {
+  } elsif ($file =~ m/\.(?:sh|am|ac|in|mk|in\.frag|pl|pm|perl)$/) {
     push @commentStyle, [ undef, qr{#},      undef, "", "# ",   ""];
   } elsif ($file =~ m/\.(?:tex)$/) {
     push @commentStyle, [ undef, qr{%},      undef, "", "% ",   ""];
