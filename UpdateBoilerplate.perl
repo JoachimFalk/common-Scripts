@@ -145,7 +145,7 @@ foreach my $file (@ARGV) {
   if ($file =~ m/\.(?:c|cpp|re2cpp|cxx|cc|C|h|hpp|tcpp|hxx|hh)$/) {
     push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n"];
     push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", ""     ];
-  } elsif ($file =~ m/\.(?:java)$/) {
+  } elsif ($file =~ m/\.(?:java|gradle)$/) {
     push @commentStyle, [ qr{\Q/*}, undef,    qr{\Q*/},  "/*\n",  " * ", " */\n"];
     push @commentStyle, [ undef,    qr{\Q//}, undef,     "",      "// ", ""     ];
   } elsif ($file =~ m/\.(?:m4)$/) {
